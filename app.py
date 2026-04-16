@@ -30,10 +30,15 @@ else:
     mu = st.number_input("Media hipotética (μ)", value=0.0)
     sigma = st.number_input("Desviación estándar (σ)", min_value=0.1, value=1.0)
     
+    # 1. Botón para generar y guardar en el estado de la sesión
     if st.button("Generar Datos Aleatorios"):
         datos = np.random.normal(mu, sigma, n)
-        df = pd.DataFrame(datos, columns=["Variable_Sintetica"])
-        st.info("Datos generados exitosamente.")
+        st.session_state['df_sintetico'] = pd.DataFrame(datos, columns=["Variable_Sintetica"])
+        st.success("¡Datos generados y guardados en memoria!")
+
+    # 2. Si ya existen datos en la memoria, los asignamos a 'df'
+    if 'df_sintetico' in st.session_state:
+        df = st.session_state['df_sintetico']
 
 # --- MÓDULO 2: VISUALIZACIÓN ---
 if df is not None:
