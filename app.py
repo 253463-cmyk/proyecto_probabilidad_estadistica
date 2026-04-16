@@ -54,4 +54,39 @@ if df is not None:
         st.subheader("Estadísticos Descriptivos")
         st.write(df[columna].describe())
 
-    st.success("Fase 2 completada: Datos listos para análisis.")
+# --- MÓDULO 3: INFERENCIA ESTADÍSTICA ---
+    st.markdown("---")
+    st.header("3. Inferencia: Calculadora de Probabilidades")
+    
+    # Extraemos media y desviación de la variable seleccionada
+    media_obs = df[columna].mean()
+    desv_obs = df[columna].std()
+    
+    st.write(f"Analizando variable: **{columna}**")
+    st.latex(rf"\mu = {media_obs:.4f}, \quad \sigma = {desv_obs:.4f}")
+
+    col_calc1, col_calc2 = st.columns(2)
+    
+    with col_calc1:
+        st.subheader("Calcular P(X < x)")
+        valor_x = st.number_input("Ingresa el valor de x:", value=float(media_obs))
+        
+        # Cálculo de Z y Probabilidad usando la librería scipy
+        from scipy import stats
+        z_score = (valor_x - media_obs) / desv_obs
+        probabilidad = stats.norm.cdf(z_score)
+        
+        st.metric("Puntaje Z", f"{z_score:.4f}")
+        st.metric("Probabilidad P(X < x)", f"{probabilidad:.4%}")
+        
+    with col_calc2:
+        st.subheader("Gráfico de Probabilidad")
+        fig, ax = plt.subplots()
+        # Creamos la curva normal teórica
+        x_plot = np.linspace(media_obs - 4*desv_obs, media_obs + 4*desv_obs, 100)
+        y_plot = stats.norm.pdf(x_plot, media_obs, desv_obs)
+        
+        ax.plot(x_plot, y_plot, color="black")
+        # Coloreamos el área bajo la curva solicitada
+        ax.fill_between(x_plot, y_plot, where=(x_plot <= valor_x), color='orange', alpha=0.5)
+        st.pyplot(fig)
