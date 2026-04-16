@@ -95,3 +95,26 @@ if df is not None:
         # Coloreamos el área bajo la curva solicitada
         ax.fill_between(x_plot, y_plot, where=(x_plot <= valor_x), color='orange', alpha=0.5)
         st.pyplot(fig)
+# --- MÓDULO 4: PRUEBA DE NORMALIDAD ---
+    st.markdown("---")
+    st.header("4. Validación: Prueba de Shapiro-Wilk")
+    
+    # Realizar la prueba estadística
+    stat, p_value = stats.shapiro(df[columna])
+    
+    col_sh1, col_sh2 = st.columns(2)
+    
+    with col_sh1:
+        st.metric("Estadístico W", f"{stat:.4f}")
+        st.metric("P-Value", f"{p_value:.4f}")
+        
+    with col_sh2:
+        st.subheader("Veredicto")
+        if p_value > 0.05:
+            st.success("✅ Los datos siguen una Distribución Normal (p > 0.05).")
+            st.write("Es seguro confiar en los cálculos de la Fase 3.")
+        else:
+            st.warning("⚠️ Los datos NO siguen una Distribución Normal (p <= 0.05).")
+            st.write("Los resultados de la calculadora podrían no ser exactos para este conjunto de datos.")
+
+    st.info("Nota: La prueba de Shapiro-Wilk es la más potente para muestras menores a 5000 datos.")
