@@ -18,7 +18,7 @@ st.markdown("**Desarrollado por:** Elizabeth Escobar")
 st.markdown("---")
 
 # --- MÓDULO 1: CARGA DE DATOS ---
-st.header("1. Carga de Datos")
+st.header("Carga de Datos")
 
 opcion_carga = st.radio("Selecciona el origen de los datos:", 
                          ("Subir CSV", "Generación Sintética (Normal)"))
@@ -50,72 +50,72 @@ else:
 # ¡CORRECCIÓN 3: Todo lo de abajo ahora está correctamente indentado dentro del if!
 if df is not None:
     
-# --- MÓDULO 3: PANEL DE CONTROL ESTADÍSTICO ---
-   if df is not None:
+# --- MÓDULO 3: PANEL DE CONTROL ESTADÍSTICO (VERSIÓN FINAL) ---
+  if df is not None:
     st.markdown("---")
-    st.header("3. Pruebas Estadísticas e Inferencia")
+    st.header("Pruebas Estadísticas e Inferencia")
     
     columnas_numericas = df.select_dtypes(include=[np.number]).columns.tolist()
     
     if columnas_numericas:
-        # Creamos dos columnas principales: Izquierda para controles, Derecha para gráficas
-        col_controles, col_graficas = st.columns([1, 2])
+        col_params, col_viz = st.columns([1, 1.2])
         
-        with col_controles:
-            st.subheader("Configuración")
+        with col_params:
+            st.subheader("⚙️ Parámetros")
             columna = st.selectbox("Variable:", columnas_numericas)
-            
-            # Parametros de la prueba
-            h0_valor = st.number_input("Hipótesis Nula (H₀)", value=float(df[columna].mean()))
+            h0_valor = st.number_input("H₀ (Media hipotética)", value=float(df[columna].mean()))
             tipo_cola = st.selectbox("Prueba (H₁)", ["Bilateral (≠)", "Cola Derecha (>)", "Cola Izquierda (<)"])
-            alpha = st.slider("Significancia (α)", 0.01, 0.10, 0.05)
+            alpha = st.select_slider("Significancia (α)", options=[0.01, 0.05, 0.10], value=0.05)
             
-            # Cálculos internos (No visibles para el usuario)
+            # Cálculos
             datos = df[columna].dropna()
-            n = len(datos)
-            media_m = datos.mean()
-            desv_p = datos.std()
+            n, media_m, desv_p = len(datos), datos.mean(), datos.std()
             z_stat = (media_m - h0_valor) / (desv_p / np.sqrt(n))
 
+            # P-Value y Z-Crítico
             if tipo_cola == "Bilateral (≠)":
                 p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+                z_critico = stats.norm.ppf(1 - alpha/2)
             elif tipo_cola == "Cola Derecha (>)":
                 p_value = 1 - stats.norm.cdf(z_stat)
+                z_critico = stats.norm.ppf(1 - alpha)
             else:
                 p_value = stats.norm.cdf(z_stat)
+                z_critico = stats.norm.ppf(alpha)
             
-            # Resultados resumidos debajo de los controles
+            # --- VISUALIZACIÓN DE MÉTRICAS (MÁS GRANDES) ---
             st.markdown("---")
-            st.write(f"**Z-Estadístico:** {z_stat:.4f}")
-            st.write(f"**P-Value:** {p_value:.4f}")
+            m1, m2 = st.columns(2)
+            # st.metric hace que los números resalten más que el texto simple
+            m1.metric("Estadístico Z", f"{z_stat:.3f}")
+            m2.metric("P-Value", f"{p_value:.4f}")
             
             if p_value < alpha:
-                st.error("🚨 Rechazar H₀")
+                st.error(f"**Veredicto:** Rechazar H₀")
+                st.caption(f"El estadístico cayó en la zona de rechazo (Z > {abs(z_critico):.2f})")
             else:
-                st.success("✅ No Rechazar H₀")
+                st.success(f"**Veredicto:** No Rechazar H₀")
+                st.caption(f"No hay evidencia suficiente para descartar H₀")
 
-        with col_graficas:
-            st.subheader("Visualización de Datos")
-            # Ajustamos el tamaño de la figura para que quepa bien en la columna
-            fig, (ax_hist, ax_box) = plt.subplots(2, 1, figsize=(8, 6), sharex=True, 
+        with col_viz:
+            st.subheader("📊 Visualización de Datos")
+            # Gráficas pequeñas y compactas
+            fig, (ax_hist, ax_box) = plt.subplots(2, 1, figsize=(6, 4), sharex=True, 
                                                   gridspec_kw={"height_ratios": (.7, .3)})
             
-            # Histograma + KDE
             sns.histplot(df[columna], kde=True, ax=ax_hist, color="skyblue", edgecolor="black")
-            ax_hist.set_ylabel("Frecuencia")
-            
-            # Boxplot
-            sns.boxplot(x=df[columna], ax=ax_box, color="lightgreen")
+            ax_hist.set_ylabel("Freq", fontsize=8)
+            sns.boxplot(x=df[columna], ax=ax_box, color="lightgreen", linewidth=1)
             
             plt.tight_layout()
             st.pyplot(fig)
             
     else:
-        st.warning("Carga un archivo con columnas numéricas para comenzar.")
+        st.warning("No hay columnas numéricas.")
 
     # --- MÓDULO 4: PRUEBA DE NORMALIDAD ---
     st.markdown("---")
-    st.header("4. Validación: Prueba de Shapiro-Wilk")
+    st.header("Validación: Prueba de Shapiro-Wilk")
     
     # Realizar la prueba estadística
     stat, p_value = stats.shapiro(df[columna])
